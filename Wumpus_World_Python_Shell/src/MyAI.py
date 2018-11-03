@@ -20,13 +20,15 @@
 from Agent import Agent
 
 class MyAI ( Agent ):
-
+    ROW_BOUND = 7
+    COL_BOUND = 7
+    WORLD = []
     def __init__ ( self ):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
-        
-        pass
+        self._counter = 0
+
         # ======================================================================
         # YOUR CODE ENDS
         # ======================================================================
@@ -35,8 +37,18 @@ class MyAI ( Agent ):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
-        
-        return Agent.Action.CLIMB
+        self._counter += 1
+        if self._counter == 1:
+            if stench or breeze:
+                return Agent.Action.CLIMB
+            else:
+                return Agent.Action.FORWARD
+        elif self._counter == 2 or self._counter == 3:
+            return Agent.Action.TURN_LEFT
+        elif self._counter == 4:
+            return Agent.Action.FORWARD
+        else:
+            return Agent.Action.CLIMB
         # ======================================================================
         # YOUR CODE ENDS
         # ======================================================================
