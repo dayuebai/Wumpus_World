@@ -30,6 +30,7 @@ class MyAI ( Agent ):
 
     def __init__ ( self ):
         self.maze=defaultdict(lambda: defaultdict(set))
+        self.count=0
         ##index and set contains the surrsouding that accuse index to be wumpus
         self.safe=set()
         self.visited=set()
@@ -41,6 +42,7 @@ class MyAI ( Agent ):
         self.row,self.col=7,7
         self.bfs_queue=[]
         self.wumpus_die=False
+        self.shoot=False
 
     def getAction(self, stench, breeze, glitter, bump, scream):
 
@@ -48,15 +50,26 @@ class MyAI ( Agent ):
 
         self.safe.add(self.current)
         self.visited.add(self.current)
+
+
         if self.current == (0, 0) and stench and not breeze and not self.wumpus_die:
-            self.wumpus_die=True
-            return Agent.Action.SHOOT
+            if self.shoot:
+                return Agent.Action.CLIMB
+            else:
+                self.shoot=True
+                return Agent.Action.SHOOT
+
+
         self.make_percept(stench,breeze,bump,scream)
 
-        if glitter:
+
+
+        if glitter and not self.find_gold:
             self.find_gold=True
             self.go_home()
+
             return Agent.Action.GRAB
+
         if self.find_gold and not self.action:
             if self.goHome==[]:
                 return Agent.Action.CLIMB
@@ -67,8 +80,10 @@ class MyAI ( Agent ):
 
             safe_move=self.find_safe_index()
             if not self.bfs_queue and safe_move!=self.current:
+
                 self.fill_in_action(safe_move)
             elif safe_move==self.current:
+
                 self.find_gold=True
                 self.go_home()
                 if self.goHome:
@@ -88,8 +103,8 @@ class MyAI ( Agent ):
         if next_move==Agent.Action.TURN_LEFT or next_move== Agent.Action.TURN_RIGHT:
             self.direction=next_direction
         elif next_move==Agent.Action.SHOOT:
-
-            self.safe.add((self.direction[0] + self.current[0], self.direction[1] + self.current[1]))
+            if not breeze:
+                self.safe.add((self.direction[0] + self.current[0], self.direction[1] + self.current[1]))
         else:
             self.current=self.direction[0]+self.current[0],self.direction[1]+self.current[1]
 
@@ -99,6 +114,7 @@ class MyAI ( Agent ):
         '''find the safe index around current position，go with current direction first
             if all four direction has been explored , do a bfs and fill in the action
         '''
+
         four_direction=[LEFT,RIGHT,UP,DOWN]
         second_choice=set()
 
@@ -118,6 +134,7 @@ class MyAI ( Agent ):
 
         explore= self.safe-self.visited
         for i in explore:
+
             temp=self.bfs(self.current,i)
             if temp:
                 self.bfs_queue=temp
@@ -161,7 +178,9 @@ class MyAI ( Agent ):
             self.surrouding_safe(self.current)
 
         if stench and not breeze:
+
             if not self.wumpus_die:
+
                 self.surrouding_wumpus(self.current)
             else:
                 self.visited.add(self.current)
@@ -173,6 +192,7 @@ class MyAI ( Agent ):
             if not self.wumpus_die:
                 self.surrouding_p_w(self.current)
             else:
+
                 self.surrouding_pits(self.current)
 
     def surrouding_p_w(self,index):
@@ -185,10 +205,11 @@ class MyAI ( Agent ):
             else:
                 self.maze[i]["pits"].add(index)
                 self.maze[i]["wumpus"].add(index)
-                if len(self.maze[i]["wumpus"])>=3:
-                    for j in self.maze[i]["wumpus"]:
-                        self.safe.add(j)
 
+                if len(self.maze[i]["wumpus"])>=2:
+
+                    for j in self.maze[i]["wumpus"]:
+                             self.safe.add(j)
 
                     self.kill_wumpus(i)
 
@@ -206,10 +227,13 @@ class MyAI ( Agent ):
     def surrouding_pits(self,index):
         '''update by surrounding by pits and current only have breeze'''
         surrounding = self.surrouding(index)
+
         for i in surrounding:
             if i in self.visited and len(self.maze[i]["wumpus"]) >= 1:
+
                 self.safe.add(i)
             else:
+
                 self.maze[i]["pits"].add(index)
                 # if len(self.maze[i]["pits"])>=4:
                 #     print("pits",i)
@@ -223,7 +247,7 @@ class MyAI ( Agent ):
                     self.safe.add(i)
             else:
                 self.maze[i]["wumpus"].add(index)
-                if len(self.maze[i]["wumpus"])>=3:
+                if len(self.maze[i]["wumpus"])>=2:
 
                     for j in self.maze[i]["wumpus"]:
                         self.safe.add(j)
